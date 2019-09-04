@@ -3,13 +3,11 @@ package control;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.Semaphore;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import model.Carro;
 import model.ObjetoMalha;
 
 /**
@@ -31,10 +29,7 @@ public class PanelTableController {
         initMalha();
     }
 
-    public synchronized ObjetoMalha getValueAt(int row, int column, boolean selected) {
-//        if (deck[row][column].isEntrada() && deck[row][column].isRolamento()) {
-//            return deck[row][column].getCarro();
-//        }
+    public ObjetoMalha getValueAt(int row, int column, boolean selected) {
         return deck[row][column];
     }
 
@@ -50,36 +45,36 @@ public class PanelTableController {
         addCarro(row, column);
     }
 
-    public synchronized int getCarrosSize() {
+    public int getCarrosSize() {
         return carros.size();
     }
 
-    public synchronized ObjetoMalha[][] getDeck() {
+    public ObjetoMalha[][] getDeck() {
         return deck;
     }
 
-    public synchronized void removerCarro(Carro carro) {
+    public void removerCarro(Carro carro) {
         carros.remove(carro);
     }
 
-    public synchronized void encerrarTodos() {
+    public void encerrarTodos() {
         for (Carro carro : carros) {
             carro.finalizar();
         }
         carros.removeAll(carros);
     }
-
-    public synchronized void addCarro(int row, int column) {
-        Carro carro = new Carro(this.deck[row][column], this);
-        this.deck[row][column] = carro;
+    
+    public void addCarro(int row, int column) {
+        this.deck[row][column].setCarro(true);
+        Carro carro = new Carro(this.deck[row][column]);
         this.carros.add(carro);
         new Thread(carro).start();
         notificarMudancas();
     }
 
-    public synchronized void addCarro() {
+    public void addCarro() {
         for (int[] entrada : entradas) {
-            if ((deck[entrada[0]][entrada[1]].getClass().equals(ObjetoMalha.class))) {
+            if (!(deck[entrada[0]][entrada[1]].getClass().equals(Carro.class))) {
                 addCarro(entrada[0], entrada[1]);
                 entradas.remove(entrada);
                 entradas.add(entrada);
@@ -99,7 +94,7 @@ public class PanelTableController {
     private void initMalha() {
         Scanner scanner = null;
         try {
-            scanner = new Scanner(new File("malha.txt"));
+            scanner = new Scanner(new File("malha-exemplo-3.txt"));
         } catch (FileNotFoundException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -134,7 +129,7 @@ public class PanelTableController {
         }
     }
 
-    public synchronized void notificarMudancas() {
+    public void notificarMudancas() {
         for (PanelTableObserver obs : obss) {
             obs.notifyChangedCards();
         }

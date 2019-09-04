@@ -114,7 +114,7 @@ public class PanelTable extends JPanel implements PanelTableObserver {
     }
 
     @Override
-    public synchronized void notifyChangedCards() {
+    public void notifyChangedCards() {
         table.repaint();
     }
 
