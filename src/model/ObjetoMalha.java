@@ -1,6 +1,7 @@
 package model;
 
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -17,8 +18,9 @@ public class ObjetoMalha {
     private boolean entrada;
     private boolean saida;
     private boolean carro;
-    private boolean ocupado;
-    private Semaphore semaphore;
+    private boolean espera;
+    private Semaphore posicaoAtual;
+    private Semaphore rumo;
 
     public ObjetoMalha(int codigo, int codigoX, int codigoY, boolean entrada, boolean saida) {
         this.codigo = codigo;
@@ -26,7 +28,8 @@ public class ObjetoMalha {
         this.codigoY = codigoY;
         this.entrada = entrada;
         this.saida = saida;
-        this.semaphore = new Semaphore(1);
+        this.posicaoAtual = new Semaphore(1);
+        this.rumo = new Semaphore(1);
     }
 
     public int getCodigo() {
@@ -42,10 +45,10 @@ public class ObjetoMalha {
     }
 
     public String getImagem() {
-        if ((carro) && (!ocupado)) {
+        if ((carro) && (espera)) {
             return "images/carro0.png";
         }
-        if ((carro) && (ocupado)) {
+        if ((carro) && (!espera)) {
             return "images/carro1.png";
         }
         return "images/" + codigo + ".png";
@@ -57,6 +60,10 @@ public class ObjetoMalha {
 
     public boolean isSaida() {
         return saida;
+    }
+
+    public boolean isCruzamento() {
+        return codigo != 1 && codigo != 2 && codigo != 3 && codigo != 4;
     }
 
     public void setCodigoX(int codigoX) {
@@ -75,17 +82,35 @@ public class ObjetoMalha {
         this.saida = saida;
     }
 
-    public void setOcupado(boolean ocupado) {
-        this.ocupado = ocupado;
-    }
-    
-    public void setCarro(boolean carro) {
+    public boolean inserirRumo() {
         try {
-            semaphore.acquire();
-            this.carro = carro;
+            this.espera = rumo.tryAcquire(100, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(ObjetoMalha.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return this.espera;
+    }
+
+    public void inserirCarro(ObjetoMalha objAnterior) {
+        try {
+            posicaoAtual.acquire();
+            this.carro = true;
+            if (objAnterior != null) {
+                objAnterior.retirarCarro();
+//                objAnterior.retiraRumo();
+            }
         } catch (InterruptedException ex) {
             Logger.getLogger(ObjetoMalha.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
+    public void retirarCarro() {
+        posicaoAtual.release();
+        this.carro = false;
+    }
+
+    public void retiraRumo() {
+        this.rumo.release();
+        this.espera = false;
+    }
 }

@@ -54,6 +54,7 @@ public class PanelTableController {
     }
 
     public void removerCarro(Carro carro) {
+        carro.finalizar();
         carros.remove(carro);
     }
 
@@ -62,14 +63,14 @@ public class PanelTableController {
             carro.finalizar();
         }
         carros.removeAll(carros);
+        notificarMudancas();
     }
     
     public void addCarro(int row, int column) {
-        this.deck[row][column].setCarro(true);
-        Carro carro = new Carro(this.deck[row][column]);
+        this.deck[row][column].inserirCarro(null);
+        Carro carro = new Carro(this, this.deck[row][column]);
         this.carros.add(carro);
         new Thread(carro).start();
-        notificarMudancas();
     }
 
     public void addCarro() {
